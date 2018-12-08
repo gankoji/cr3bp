@@ -1,2 +1,2 @@
 all:
-	python Main.py
+	python Main_KS.py

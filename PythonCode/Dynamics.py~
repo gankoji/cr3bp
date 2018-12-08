@@ -1,8 +1,0 @@
-import numpy as np
-import math
-
-mu_e = 3.986e14 # m^3/s^2, Earth's gravitational parameter
-R_e = 6378137 # m, Earth's equatorial radius
-
-def dynamics(t, y):
-    print("Hello")

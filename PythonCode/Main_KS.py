@@ -1,7 +1,8 @@
 import numpy as np
 import math
 import matplotlib.pyplot as plt
-
+## import orbital.elements
+#import time
 import datetime
 
 from rkf45 import *
@@ -32,11 +33,13 @@ secondsPerDay = 3600*24
 if debug:
     ## This is an approximation to the fictitious time (rather than
     ## add the expense of an event function
-    simLength = 4*secondsPerDay
-    dt = 10
+    simLength = 400*secondsPerDay
+    simLength = simLength/smaEarth
+    dt = 10.5
 else:
-    simLength = 365*secondsPerDay
-    dt = 30
+    simLength = 546*secondsPerDay
+    simLength = simLength/smaEarth
+    dt = 1
     
 N= int(math.floor(simLength/dt))
 simTime = np.linspace(0,simLength, N)
@@ -45,11 +48,12 @@ relerr = 1e-8
 abserr = 1e-3
 
 # Sim output storage
-y_out = np.zeros((N,6))
+y_out = np.zeros((N,10))
 x_out = np.zeros((N,3))
 e_out = np.zeros((N,3))
 H_out = np.zeros((N,))
 
+print(smaEarth*wEarth*R_e)
 # Initial Conditions
 r_e0 = np.array([1.4960e11, 0, 0]) # m, Earth's average orbital
                                    # distance, along the vernal
@@ -59,7 +63,7 @@ v_e0 = np.array([0, 3e4, 0]) # m/s, Earth's average orbital velocity
 
 r_sc0 = r_e0 + np.array([6.7e6, 0, 0]) # m, Spacecraft's initial
                                        # position added to Earth's
-v_sc0 = v_e0 + np.array([-1e3, 3.0e3, 0]) # m/s, Spacecraft's initial
+v_sc0 = v_e0 + np.array([-1e3, 7.0e3, 0]) # m/s, Spacecraft's initial
                                        # velocity added to Earth's
 
 # Unit Conversion
@@ -75,32 +79,38 @@ print(v_sc0)
 x_out[0,:] = r_sc0
 e_out[0,:] = smaEarth*np.array([1,0,0])
 
-# Thus we have a 12x1 initial state vector
-y0 = np.append(r_sc0, v_sc0)
+u0 = ks_init(r_sc0, v_sc0, 0, mu_s, 0)
 
-y_out[0,:] = y0
-yp = np.zeros((6,))
+# Thus we have a 10x1 initial state vector
+y0 = np.append(r_e0, v_e0)
+y0 = np.append(y0, r_sc0)
+y0 = np.append(y0, v_sc0)
+
+#u0 = np.append(u0, e_out[0,:])
+y_out[0,:] = u0
+yp = np.zeros((10,))
 Hrel = np.zeros((N,))
 
 for i,x in enumerate(simTime):
     if i==0:
         print("Initializing Done.")
-        H_out[i] = hamiltonian(x, y_out[i,:])
+        H_out[i] = u0[8]
         Hrel[i] = 0
     else:
-        y = np.reshape(y_out[i-1,:],(6,))
+        y = np.reshape(y_out[i-1,:],(10,))
         t0 = simTime[i-1]
 
-        y, yp, t, flag = r8_rkf45( dynamics, 6, y, yp, t0, x, relerr, abserr, flag)
+        y, yp, t, flag = r8_rkf45( dynamics_ks, 10, y, yp, t0, x, relerr, abserr, flag)
         y_out[i,:] = y
-        H_out[i] = hamiltonian(x, y_out[i,:])
+        H_out[i] = y[8]
         Hrel[i] = (H_out[i] - H_out[i-1])/H_out[i]
         
         if flag == 7 or flag == 6:
             flag = 2
 
-        x_out[i,:] = y[0:3]
-        t = x
+        p, pdot = ks2cart(y)
+        x_out[i,:] = p
+        t = y[9]*np.linalg.norm(y[0:4])
         lonEarth = wEarth*t
         e_out[i,:] = smaEarth*np.array([math.cos(lonEarth), math.sin(lonEarth), 0])
 
@@ -116,7 +126,7 @@ ax.legend(['Earth','Spacecraft','Sol'])
 fig.savefig('PlanarPath.png')
 
 fig1, ax1 = plt.subplots()
-ax1.plot(simTime/secondsPerDay, Hrel)
+ax1.plot(simTime/secondsPerDay*smaEarth, Hrel)
 ax1.set(xlabel='Time (Days)',ylabel='Energy',
         title='Hamiltonian (Total Energy)')
 fig1.savefig('Hamiltonian.png')
