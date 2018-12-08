@@ -1,0 +1,20 @@
+* Just figured I should get some of this down onto "paper"
+Okay so what's left that's important
+** Hamiltonian of the System
+This system has a hamiltonian that should be conserved. I should show
+that it is throughout the simulation. 
+** Keplerian Elements of the Orbits
+This should be really easy for the earth's orbit (and maybe I should
+adjust the elements of the ICs to account for, idk, Earth's *real*
+orbit...)
+
+The spacecraft is going to be a bit more difficult. I could show the
+Keplerian orbits of the satelite wrt the sun, but those would look
+weird. Then again, they would show the perturbed dynamics of the
+system if everything were accurate, so maybe that's a good thing. 
+
+I'd also like to show the Keplerian elements of the spacecraft wrt the
+Earth, because I feel like those are more likely to be consistent with
+the type of perturbations we've been dealing with. Earth is,
+realistically, the dominant body in this sim, and the sun is just a
+perturber.
