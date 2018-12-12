@@ -35,18 +35,19 @@ if debug:
     simLength = 4*secondsPerDay
     dt = 10
 else:
-    simLength = 365*secondsPerDay
-    dt = 30
+    simLength = .5*secondsPerDay
+    dt = 0.02
     
 N= int(math.floor(simLength/dt))
 simTime = np.linspace(0,simLength, N)
 flag = 1
-relerr = 1e-8
-abserr = 1e-3
+relerr = 1e-11
+abserr = 1e-11
 
 # Sim output storage
 y_out = np.zeros((N,6))
 x_out = np.zeros((N,3))
+x_g_out = np.zeros((N,3))
 e_out = np.zeros((N,3))
 H_out = np.zeros((N,))
 
@@ -57,9 +58,9 @@ r_e0 = np.array([1.4960e11, 0, 0]) # m, Earth's average orbital
 v_e0 = np.array([0, 3e4, 0]) # m/s, Earth's average orbital velocity
                              # in the y inertial direction
 
-r_sc0 = r_e0 + np.array([6.7e6, 0, 0]) # m, Spacecraft's initial
+r_sc0 = r_e0 + np.array([7.6e6, 0, 0]) # m, Spacecraft's initial
                                        # position added to Earth's
-v_sc0 = v_e0 + np.array([-1e3, 3.0e3, 0]) # m/s, Spacecraft's initial
+v_sc0 = v_e0 + np.array([0, 1e3, 0]) # m/s, Spacecraft's initial
                                        # velocity added to Earth's
 
 # Unit Conversion
@@ -74,7 +75,8 @@ print(v_sc0)
 
 x_out[0,:] = r_sc0
 e_out[0,:] = smaEarth*np.array([1,0,0])
-
+x_g_out[0, :] = x_out[0, :] - e_out[0, :]
+        
 # Thus we have a 12x1 initial state vector
 y0 = np.append(r_sc0, v_sc0)
 
@@ -103,8 +105,16 @@ for i,x in enumerate(simTime):
         t = x
         lonEarth = wEarth*t
         e_out[i,:] = smaEarth*np.array([math.cos(lonEarth), math.sin(lonEarth), 0])
+        x_g_out[i, :] = x_out[i, :] - e_out[i, :]
 
 print("Finished: " + datetime.datetime.now().strftime("%H:%M:%S.%f"))
+
+fig2, ax2 = plt.subplots()
+ax2.plot(x_g_out[:, 0], x_g_out[:, 1])
+ax2.set(xlabel='X - Earth Radii',ylabel='Y - Earth Radii',
+       title='Geocentric Satellite Motion')
+ax2.legend(['Spacecraft'])
+fig2.savefig('GeoPlanarPath.png')
 
 fig, ax = plt.subplots()
 ax.plot(e_out[:,0], e_out[:,1])

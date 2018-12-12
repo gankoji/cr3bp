@@ -339,44 +339,28 @@
   \begin{figure}
     \caption{Planar Motion of S/C and Earth in the Cowell formulation}
     \centering
-    \includegraphics[width=\textwidth]{PlanarPath90}
+    \includegraphics[scale=0.5]{PlanarPath90}
     \label{cowPath}
   \end{figure}
 
-  \begin{figure}
-    \caption{Relative Hamiltonian Error, Cowell}
-    \centering
-    \includegraphics[width=\textwidth]{Hamiltonian90}
-    \label{cowHam}
-  \end{figure}
-  
   The Cowell formulation was actually quite difficult to get to
   converge to a continuous orbit. The time steps necessary for a
   physically possible orbit were on the order of 30 seconds with the
   Cowell formulation, which took an overall 4 minutes and 10.8 seconds
-  to complete. The Hamiltonian relative error is shown in figure
-  \ref{cowHam}.
+  to complete.
 
   For the KS formulation, the story was completely different. The
   timestep used could be as large as 1 in s (or roughly 1 times the
   semimajor axis of the Earth). This took a whopping 0.647 seconds to
-  complete. The Hamiltonian relative error is shown in figure
-  \ref{ksham}.
+  complete.
 
   \begin{figure}
     \caption{Planar Motion of S/C and Earth in the Kustaanheimo-Steifel formulation}
     \centering
-    \includegraphics[width=\textwidth]{PlanarPathKS}
+    \includegraphics[scale=0.5]{PlanarPathKS}
     \label{kspath}
   \end{figure}
 
-  \begin{figure}
-    \caption{Relative Hamiltonian Error, Kustaanheimo-Steifel}
-    \centering
-    \includegraphics[width=\textwidth]{HamiltonianKS}
-    \label{ksham}
-  \end{figure}
-  
   Also of note is the interesting form of the relative error for the
   KS Hamiltonian. While the Cowell Hamiltonian error was oscillatory,
   the KS Hamiltonian spiked significantly during the close
@@ -401,6 +385,65 @@
     \end{tabular}
     \caption{Relative error and run time versus time step, Cowell and KS formulations.}
   \end{table}
+
+  \subsection{Investigating Captured Orbits}
+  For this scenario, we setup the initial conditions very
+  similarly. The Earth's conditions do not change from the previous:
+
+  \begin{equation} \label{ics}
+    \vec{r}_{Earth} = r_{Circular}\hat{i}
+  \end{equation}
+  \begin{equation}
+    \vec{\omega}_{Earth} = \omega_{Circular}\hat{k}
+  \end{equation}
+
+  Whereas the spacecraft does see a rather significant change:
+  
+  \begin{equation}
+    \vec{r}_{SC} = 7600\hat{i}
+  \end{equation}
+  \begin{equation}
+    \vec{v}_{SC} = 1\hat{j}
+  \end{equation}
+
+  Where again, spacecraft position and velocity are specified in
+  kilometers and kilometers/second, respectively. The time each
+  solution was propagated, however, differs significantly in this
+  scenario. The Cowell formulation was propagated for a total of 0.5
+  days, and took 336.7 seconds to complete. The KS formulation,
+  however, was still quite a bit faster in this scenario, taking 9.9
+  seconds to complete approximately 44.5 days of the orbit. This
+  result is shown in figure \ref{kspathGeo}. 
+
+  \begin{figure}
+    \caption{Geocentric Motion of S/C and Earth in the Cowell formulation}
+    \centering
+    \includegraphics[scale=0.5]{GeoPlanarPath}
+    \label{cowPathGeo}
+  \end{figure}
+
+  \begin{figure}
+    \caption{Geocentric Motion of S/C and Earth in the Kustaanheimo-Steifel formulation}
+    \centering
+    \includegraphics[scale=0.5]{PlanarPathKSGeo}
+    \label{kspathGeo}
+  \end{figure}
+
+  Of note here, is the significant degradation in the accuracy of the
+  orbit in the Cowell formulation, even with an overall time step of
+  0.02 seconds! It is clear that even with such a small time step, and
+  rather strict error tolerances to the adaptive solver between each
+  time step (relative and absolute error tolerances of
+  \( 10^{-11} \)), energy is being lost and found in the system, this
+  close to the Earth. The Cowell orbit for the significantly reduced
+  timescale is shown in figure \ref{cowPathGeo}. It is also important
+  to note that the only forces modeled in this integration study are
+  the gravitational potentials due to the Sun and Earth. J2
+  oblateness, drag, lunar effects, and others are ignored. 
+  
+  %----------------------------------------------------
+  % Just noting that this is the beggining of section 4
+  % ----------------------------------------------------
   
   \section{Investigating the Switching Distance}
   In order to investigate the performance of the KS formulation
@@ -424,14 +467,14 @@
   \begin{figure}
     \caption{Planar Motion of S/C and Earth}
     \centering
-    \includegraphics[width=\textwidth]{PlanarPath}
+    \includegraphics[scale=0.5]{PlanarPath}
     \label{kspath10}
   \end{figure}
 
   \begin{figure}
     \caption{Relative Hamiltonian Error, 10x Switching Distance}
     \centering
-    \includegraphics[width=\textwidth]{Hamiltonian}
+    \includegraphics[scale=0.5]{Hamiltonian}
     \label{ksham10}
   \end{figure}
 
@@ -452,7 +495,10 @@
   motion can be advantageous in numerical propagation of orbits with
   close encounters. While it does suffer from difficulties near
   singularities, far away from them it performs admirably, and with
-  far greater efficiency than the Cowell formulation.
+  far greater efficiency than the Cowell formulation. It is also
+  possible, through the process of switching the primary bodies of the
+  regularized dynamics, to reduce the impact of close encounters
+  further.
 
   While there are difficulties to consider when using a regularized
   formulation, such as the increased complexity of the equations of

@@ -11,7 +11,7 @@ from Dynamics_KS import dynamics_ks, ks_init, ks2cart, setUnits, inSoI
 print("Started: " + datetime.datetime.now().strftime("%H:%M:%S.%f"))
 
 ## Escape velocity calculation
-r0 = 7.5e3
+r0 = 7.6e3
 V0 = 1.0
 
 V_circ = math.sqrt(mu_e/r0)
@@ -36,7 +36,9 @@ v_sc0 = v_e0 + np.array([0, V0, 0])
 ## Check our starting position before normalizing
 r_sc_e = np.linalg.norm(r_sc0 - r_e0)
 
-simLength = 3650*secondsPerDay
+print(3600/21.48174709402819)
+
+simLength = 36*secondsPerDay*167.584134765
 endDate = simLength
 
 if 0: #r_sc_e < R_SoI:
@@ -54,7 +56,7 @@ else:
     inSoI = False
     DU = np.linalg.norm(r_sc0)
     TU = math.sqrt(mu_e/(DU**3))
-    dt = 180
+    dt = 3600
     simLength = simLength*TU
     dt = dt*TU
     
@@ -63,7 +65,7 @@ setUnits(DU, TU)
 
 print("Sim Length: " + str(simLength))
 J = int(math.floor(simLength/dt))
-N = int(2e3)
+N = int(3e4)
 simTime = np.linspace(0,simLength, N)
 flag = 1
 relerr = 1e-8
@@ -121,7 +123,7 @@ while exitFlag:
             exitFlag = False
             print("End Time: " + str(y[9]))
         elif i >= N-1:
-            print("Exceeded number of steps at: " + str(y[9]))
+            print("Exceeded number of steps at: " + str(y[9]/TU/secondsPerDay))
             exitFlag = False
             
         if not inSoI:
