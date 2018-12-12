@@ -1,79 +1,13 @@
-% Alright so now we're getting into the research paper. No idea what I'm
-% doing, but I'm gonna go ahead and riff on it.
-
-% So, requirements of the paper:
-
-% Abstract: I've already written this, but it's pretty garbage. Probably
-% going to end up rewriting it.
-
-% Introduction: Present background on the problem (easy). Describe the
-% foundation or fundamental concepts (also pretty easy).
-
-% Literature Search: I think I actually need to summarize the key
-% results of the papers I've read here. Probably best to start with a
-% little theory from Roy, then on to the K-S regularization technique,
-% and finishing this with the summary of Davide's switching framework.
-
-% Aspects of Mission of Problem of Interest: Time to setup the
-% particular scenario in which I'll be doing the investigation. Probably
-% best to just recreate Davide's results, so hyperbolic trajectories wrt
-% the third body (Earth), laid out in the heliocentric system. Need to
-% discuss
-
-% Importance of the mission (I think these are redundant, and should
-% only do one)
-% Importance of the problem to astrodynamics
-% Development of the solution method
-% Analysis of the method
-
-% This will be the meat of the report. Development of the solution
-% method should pretty closely follow Davide's paper. Same with
-% importance of the particular mission and of the problem. Analysis can
-% simply compare the numerical results of the various switching
-% techniques.
-
-% Extension: Need to propose extensions to the work. What's a good
-% extension here? Another possible mission/scenario? Probably not the
-% same asteroid that Davide looked at.
-
-% Looking at the problem of regularized dynamics, it seems that in three 
-% dimensional space we're going to need four coordinates, related to the
-% original three by the Levi-Civita matrix:
-
-% x = L(u)*u
-
-% Where L is a four by four orthogonal matrix of the parameters u. Going
-% from u to x is well defined by this, but going from x to u is not,
-% because of the extra coordinate (it's not unique). However, noting
-% that the parameter velocity is bilinear to the parameter coordintes,
-% we can find a unique transformation that satisfies the original
-% relationship.
-
-% The equations of motion are then
-
-% u'' + (K^2/2 - (u',u'))/(u,u)u = Q
-
-% Where Q is the parameterized force. Given a potential for the original
-% system, V, we can show that the same potential in parameter space is:
-
-% trans(L(u))*delV/delx = 1/d*delV/delu
-
-% Q = abs(u)^2/2*(-1/2*delV/delu + trans(L(u))*P)
-
-% I still have lingering questions regarding the actual construction of
-% V and P. Stiefel appears to treat them as the disturbing potential and
-% disturbing force, respectively. But if that's the case, where does the
-% original gravitational potential for the main body appear?
-
 \documentclass[11pt,twoside,letterpaper]{article}
 
 \usepackage{amsmath}
 \usepackage{graphicx}
 \begin{document}
-\title{Numerical Integration of Close Encounters in the Circular
-  Restricted Three Body Problem}
+\title{Regularized Dynamics in the Circular Restricted Three Body
+  Problem}
+
 \author{Jacob Bailey}
-\date{December 5, 2018}
+\date{December 12, 2018}
 \maketitle
 
 \begin{abstract}
@@ -90,7 +24,10 @@
   formulation (directly integrating Newton's equations), and a
   regularized formulation due to Kustaanheimo and Steifel;
   investigating their numerical performance and efficiency in treating
-  the circular restricted Earth-Sun-Spacecraft problem. 
+  the circular restricted Earth-Sun-Spacecraft problem. We show the
+  performance of both formulations for multiple spacecraft
+  trajectories in this configuration, and compare/contrast performance
+  for these different scenarios. 
 
   \end{abstract}
 
@@ -152,6 +89,52 @@
   evaluations to solve the system. This strategy is thus seen, at
   least at face value, to be less than desirable for some
   applications.
+
+  \subsubsection {Hamiltonian of the Sun-Earth-Spacecraft System}
+  We start treatment of the dynamics with the Lagrangian. Ignoring the
+  sun’s dynamics, as it’s the center of our chosen coordinate system,
+  we take the kinetic and potential and kinetic energies of our two
+  remaining bodies as:
+
+  \begin {equation}
+    T_{SC} = \frac{1}{2}m_{SC}v^2_{SC}
+  \end {equation}
+  \begin {equation}
+    T_E = \frac{1}{2}m_Ev^2_E
+  \end {equation}
+  \begin {equation}
+    U_{SC} = -\frac{\mu_{Sun}}{\vec{r}_{SC}} - \frac{\mu_E}{\left(\vec{r}_E - \vec{r}_{SC}\right)}
+  \end {equation}
+  \begin {equation}
+    U_E = -\frac{\mu_{Sun}}{\vec{r}_{E}}
+  \end {equation}
+
+  This leads us to the corresponding Lagrangian:
+
+  \begin {equation}
+    L = \frac{1}{2}m_{SC}v^2_{SC} + \frac{1}{2}m_Ev^2_E
+    + \frac{\mu_{Sun}}{\vec{r}_{SC}} + \frac{\mu_E}{\left(\vec{r}_E - \vec{r}_{SC}\right)}
+     + \frac{\mu_{Sun}}{\vec{r}_{E}}
+  \end {equation}
+  
+  After dropping the final term in the second EOM (an approximation
+  due to the significant differences in magnitude between the
+  accelerations caused on the Earth by the sun and the spacecraft), we
+  arrive at the Hamiltonian of the system via Hamilton’s equations:
+
+  \begin {equation}
+    H = \sum{\dot{q}_ip_i} - L
+  \end {equation}
+  
+  \begin {equation}
+    H = \frac{1}{2}m_{SC}v^2_{SC} + \frac{1}{2}m_Ev^2_E
+    - \frac{\mu_{Sun}}{\vec{r}_{SC}} - \frac{\mu_E}{\left(\vec{r}_E - \vec{r}_{SC}\right)}
+    - \frac{\mu_{Sun}}{\vec{r}_{E}}
+  \end {equation}
+    
+  Since the Hamiltonian is autonomous and involves no high order
+  functions of the generalized coordinates or momenta, we expect this
+  to be an integral of the motion.
   
   \subsection {Regularization of the Equations of Motion}
   Next, we discuss a method to remove such singularities from the
@@ -290,6 +273,26 @@
   Earth, as might happen in a mission involving a gravity assist to
   reach the outer planets of the solar system.
 
+  To start, we investigate the dynamics in the Cowell formulation,
+  where numerical integration is performed directly on the Cartesian
+  position and velocity vectors of the bodies. The coordinate frame
+  used here, shown in figure \ref{coords}, is the
+  Heliocentric-Ecliptic: origin at the sun’s center, primary axis
+  along the vernal equinox, fundamental plane the Earth’s
+  ecliptic. Additionally, we take the coordinates to be along the
+  three orthogonal axes (rectilinear rather than spherical), and the
+  units of distance to be Earth equatorial radii. This was chosen as a
+  compromise on dynamic range/numerical precision between the Earth’s
+  orbit and the spacecraft’s. Units of time were chosen as seconds,
+  although this was for convenience rather than performance.
+
+  \begin{figure}
+    \caption{The Heliocentric-Ecliptic Coordinate System}
+    \centering
+    \includegraphics[scale=0.15]{HeliocentricEcliptic}
+    \label{coords}
+  \end{figure}
+  
   In both solutions, the Earth and Sun are considered so massive in
   comparison to the spacecraft that we neglect its effect on
   them. Additionally, we also assume that the Earth's orbital
@@ -298,10 +301,12 @@
   reduces the number of equations in the Cowell formulation to 6, with
   the K-S formulation retaining 10.
 
-  Also in both solutions, the initial conditions are the same. We take
-  Earth starting at a distance equal to its circular radius along the
-  x axis of the coordinates, with the spacecraft's specific position
-  and velocity relative to the Earth. These can be stated as follows:
+  \subsection {Close Encounters (of the Spacecraft Kind)}
+  For both dynamical formulations, the initial conditions are the
+  same. We take Earth starting at a distance equal to its circular
+  radius along the x axis of the coordinates, with the spacecraft's
+  specific position and velocity relative to the Earth. These can be
+  stated as follows:
 
   \begin{equation} \label{ics}
     \vec{r}_{Earth} = r_{Circular}\hat{i}
@@ -355,9 +360,8 @@
   For the KS formulation, the story was completely different. The
   timestep used could be as large as 1 in s (or roughly 1 times the
   semimajor axis of the Earth). This took a whopping 0.647 seconds to
-  complete. We note here, that both of these runs were adjusted to
-  achieve a similar order of relative error in the Hamiltonian. The
-  Hamiltonian relative error is shown in figure \ref{ksham}.
+  complete. The Hamiltonian relative error is shown in figure
+  \ref{ksham}.
 
   \begin{figure}
     \caption{Planar Motion of S/C and Earth in the Kustaanheimo-Steifel formulation}
@@ -382,7 +386,9 @@
   in the forcing function, this aligns with expectations. To
   succinctly summarize the relative accuracies, we show the magnitude
   of relative errors in the Hamiltonian for both formulations, on
-  various time steps, in table \ref{resultsTab}.
+  various time steps, in table \ref{resultsTab}. The time steps with
+  each formulation were varied to achieve (approximately) the same
+  order of relative error in the Hamiltonian. 
 
   \begin{table}[] \label{resultsTab}
     \centering
@@ -396,14 +402,14 @@
     \caption{Relative error and run time versus time step, Cowell and KS formulations.}
   \end{table}
   
-  \section{Extension of the Work}
+  \section{Investigating the Switching Distance}
   In order to investigate the performance of the KS formulation
   further, we consider changing the switching distance for the
   integrator. In our original formulation, the switching distance was
   set to
   
   \begin{equation}
-    \left(\frac{\mu_{Earth}}{\mu_{Sun}}\right)^{\frac{2}{5}}*a_{Earth}\)
+    \left(\frac{\mu_{Earth}}{\mu_{Sun}}\right)^{\frac{2}{5}}*a_{Earth}
   \end{equation}
   
   To look for improvements, we search for a switching distance which
