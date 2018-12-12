@@ -10,42 +10,60 @@ from Dynamics_KS import dynamics_ks, ks_init, ks2cart, setUnits, inSoI
 
 print("Started: " + datetime.datetime.now().strftime("%H:%M:%S.%f"))
 
+## Escape velocity calculation
+r0 = 7.5e3
+V0 = 1.0
+
+V_circ = math.sqrt(mu_e/r0)
+V_e = math.sqrt(2)*V_circ
+
+print("Circular Speed: " + str(V_circ) + " km/s. Escape Speed: " + str(V_e) + " km/s.")
+
 # Initial Conditions
-r_e0 = np.array([smaEarth, 0, 0]) # km, Earth's average orbital
-# distance, along the vernal
-                                   # equinox
-v_e0 = np.array([0, smaEarth*wEarth, 0]) # km/s, Earth's average orbital velocity
-                             # in the y inertial direction
 
-r_sc0 = r_e0 + np.array([6.6e3, 0, 0]) # km, Spacecraft's initial
-                                       # position added to Earth's
-v_sc0 = v_e0 + np.array([0, 8.0, 0]) # km/s, Spacecraft's initial
-                                       # velocity added to Earth's
+# km, Earth's average orbital distance, along the vernal equinox
+r_e0 = np.array([smaEarth, 0, 0])
 
+# km/s, Earth's average orbital velocity in the y inertial direction
+v_e0 = np.array([0, smaEarth*wEarth, 0]) 
+                                         
+# km, Spacecraft's initial position added to Earth's
+r_sc0 = r_e0 + np.array([r0, 0, 0])
+
+# km/s, Spacecraft's initial velocity added to Earth's
+v_sc0 = v_e0 + np.array([0, V0, 0]) 
+
+## Check our starting position before normalizing
+r_sc_e = np.linalg.norm(r_sc0 - r_e0)
+
+simLength = 3650*secondsPerDay
+endDate = simLength
+
+if 0: #r_sc_e < R_SoI:
+    # Start in Geocentric
+    r_sc0 = r_sc0 - r_e0
+    v_sc0 = v_sc0 - v_e0
+    inSoI = True
+    DU = np.linalg.norm(r_sc0)
+    TU = math.sqrt((mu_e/1e7)/(DU**3))
+    dt = 3600
+    simLength = simLength*TU
+    dt = dt*TU
+else:
+    # Start in Heliocentric
+    inSoI = False
+    DU = np.linalg.norm(r_sc0)
+    TU = math.sqrt(mu_e/(DU**3))
+    dt = 180
+    simLength = simLength*TU
+    dt = dt*TU
+    
 # Unit Conversion
-DU = np.linalg.norm(r_sc0)
-TU = math.sqrt(mu_e/(DU**3))
 setUnits(DU, TU)
 
-# Simulation Conditions
-debug = False
-
-if debug:
-    simLength = 400*secondsPerDay
-    endData = simLength
-    dt = 900
-    simLength = simLength/DU
-    dt = dt/DU
-else:
-    simLength = 365*secondsPerDay
-    endDate = simLength
-    dt = 600
-    simLength = simLength/DU
-    dt = dt/DU
-    
+print("Sim Length: " + str(simLength))
 J = int(math.floor(simLength/dt))
-print(J)
-N = int(1e6)
+N = int(2e3)
 simTime = np.linspace(0,simLength, N)
 flag = 1
 relerr = 1e-8
@@ -101,10 +119,9 @@ while exitFlag:
 
         if fabs(y[9] - endDate*TU) < 1e-3:
             exitFlag = False
-            print("End Time")
-            print(i)
+            print("End Time: " + str(y[9]))
         elif i >= N-1:
-            print(i)
+            print("Exceeded number of steps at: " + str(y[9]))
             exitFlag = False
             
         if not inSoI:
@@ -136,9 +153,11 @@ while exitFlag:
                 yp = dynamics_ks(x, y)
                 y_out[i, :] = y
                 x_out[i, :] = p + e_out[i, :]
-
+        # print(y[9])
     x_gc_out[i, :] = x_out[i, :] - e_out[i, :]
     i = i + 1
+    # print(i)
+
 
 new_e_out = np.trim_zeros(e_out[:,0])
 a = new_e_out.size
