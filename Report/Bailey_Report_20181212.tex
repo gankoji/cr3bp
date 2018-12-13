@@ -42,15 +42,15 @@
     situations. We draw from these insights whenever we tackle a new
     problem, as guiding principles to lead us on to new solutions.
 
-    However, analytical solutions are incredibly difficult to come by,
+    However, analytical solutions are incredibly difficult to come by
     in all but the simplest of problems. Thus, we most often have to
     turn to our computers to look for answers to the more interesting
     questions in astrodynamics. In this paper, we examine the work of
-    Davide Amato, Guilio Bau, and Claudio Bombardelli in “Accurate
-    orbit propagation in the presence of planetary close encounters”
+    Davide Amato, Guilio Bau, and Claudio Bombardelli in \textit{Accurate
+    Orbit Propagation in the Presence of Planetary Close Encounters}
     \cite{amato_2017}. The topic of planetary close encounters in
     numerically determining a satellite’s trajectory is an interesting
-    problem, one fraught with difficulties as the physics the
+    problem; one fraught with difficulties as the physics the
     spacecraft encounters change significantly throughout different
     portions of its orbit. In using the techniques of regularization
     in the manner of Kustaanheimo and Steifel \cite{stiefel_1971}, we
@@ -68,7 +68,7 @@
   system, as shown below in \ref{cowell}. 
   
   \begin{equation} \label{cowell}
-    \ddot{\vec{r}}_i = \sum_{j=1}^{N} \frac{Gm_j\left(\vec{r}_j - \vec{r}_i\right)}{r_{ij}^3} , i \neq j
+    \ddot{\vec{r}}_i = \sum_{j=1, i\neq j}^{N} \frac{Gm_j\left(\vec{r}_j - \vec{r}_i\right)}{r_{ij}^3} , i \neq j
   \end{equation}
 
   Here, \(\ddot{\vec{r}}_i\) is the acceleration of the \textit{i}th
@@ -78,23 +78,23 @@
   this formulation is discussed in detail in Roy \cite{roy_2017}.
 
   It is immediately apparent, upon inspection, that these equations
-  contain a few singularities. There are precisely two in this system:
-  one when bodies 1 and 2 collide, and another when bodies 2 and 3 do
-  the same. This creates difficulties in the numerical solution of the
-  system under certain conditions, such as close encounters. An
-  adaptive time-step solver, such as the Runge-Kutta-Fehlberg methods,
-  would be forced into exceedingly small steps during such a close
-  encounter in order to achieve the specified accuracy tolerance,
-  leading to undesirably large numbers of steps and function
-  evaluations to solve the system. This strategy is thus seen, at
-  least at face value, to be less than desirable for some
-  applications.
+  contain a few singularities. There are precisely three in this
+  system: one when bodies 1 and 2 collide, another when bodies 2 and 3
+  collide, and the third when bodies 1 and 3 do the same. This creates
+  difficulties in the numerical solution of the system under certain
+  conditions, such as close encounters. An adaptive time-step solver,
+  such as the Runge-Kutta-Fehlberg method, would be forced into
+  exceedingly small steps during such a close encounter in order to
+  achieve the specified accuracy tolerance, leading to undesirably
+  large numbers of steps and function evaluations to solve the
+  system. This strategy is thus seen, at least at face value, to be
+  less than desirable for some applications.
 
   \subsubsection {Hamiltonian of the Sun-Earth-Spacecraft System}
   We start treatment of the dynamics with the Lagrangian. Ignoring the
-  sun’s dynamics, as it’s the center of our chosen coordinate system,
-  we take the kinetic and potential and kinetic energies of our two
-  remaining bodies as:
+  sun's dynamics, as it's the center of our chosen
+  coordinate system, we take the kinetic and potential and kinetic
+  energies of our two remaining bodies as:
 
   \begin {equation}
     T_{SC} = \frac{1}{2}m_{SC}v^2_{SC}
@@ -120,7 +120,7 @@
   After dropping the final term in the second EOM (an approximation
   due to the significant differences in magnitude between the
   accelerations caused on the Earth by the sun and the spacecraft), we
-  arrive at the Hamiltonian of the system via Hamilton’s equations:
+  arrive at the Hamiltonian of the system via Hamilton's equations:
 
   \begin {equation}
     H = \sum{\dot{q}_ip_i} - L
@@ -161,8 +161,8 @@
   anomaly. We note here that \(r\) is the magnitude of the position
   vector.
  
-  The second step in the regularization process is what is aptly
-  called the K-S tranform. By forming the Levi-Civita matrix with the
+  The second step in the regularization process in what is aptly
+  called the KS tranform. By forming the Levi-Civita matrix with the
   four dimensional parameter vector \(\vec{u}\):
   \begin{equation} \label{levi}
     L(\vec{u}) =
@@ -207,7 +207,7 @@
   \(t\). It is worth noting that in this formulation, when the
   disturbing potential and forces are zero (as in the case of
   Keplerian motion), this system reduces to a simple harmonic
-  oscillator.
+  oscillator in four dimensions.
 
   These regularized equations of motion have increased in total order
   (from order 6 to order 10). However, as we will show, the increase
@@ -277,14 +277,13 @@
   where numerical integration is performed directly on the Cartesian
   position and velocity vectors of the bodies. The coordinate frame
   used here, shown in figure \ref{coords}, is the
-  Heliocentric-Ecliptic: origin at the sun’s center, primary axis
-  along the vernal equinox, fundamental plane the Earth’s
+  Heliocentric-Ecliptic: origin at the sun's center, primary axis
+  along the vernal equinox, fundamental plane the Earth's
   ecliptic. Additionally, we take the coordinates to be along the
-  three orthogonal axes (rectilinear rather than spherical), and the
-  units of distance to be Earth equatorial radii. This was chosen as a
-  compromise on dynamic range/numerical precision between the Earth’s
-  orbit and the spacecraft’s. Units of time were chosen as seconds,
-  although this was for convenience rather than performance.
+  three orthogonal axes (rectilinear rather than spherical). The units
+  used for distance and time for the scenarios considered here were
+  normalized to the initial conditions, such that the magnitude of the
+  starting position was always unity.
 
   \begin{figure}
     \caption{The Heliocentric-Ecliptic Coordinate System}
@@ -329,12 +328,13 @@
   period of the spacecraft about the sun. 
 
   The results of the numerical integration using both schemes are
-  shown in figures 1-4. One difference is immediately apparent: the
-  orbits for the satellite predicted by each formulation are entirely
-  different. The Cowell formulation, shown in figure \ref{cowPath},
-  takes more than a year to exit the Earth's Sphere of Influence,
-  whereas the KS formulation shows the spacecraft exiting the sphere
-  almost immediately, as seen in figure \ref{kspath}.
+  shown in figures \ref{cowPath} through \ref{ksHam}. One difference
+  is immediately apparent: the orbits for the satellite predicted by
+  each formulation are entirely different. The Cowell formulation,
+  shown in figure \ref{cowPath}, takes more than a year to exit the
+  Earth's Sphere of Influence, whereas the KS formulation shows the
+  spacecraft exiting the sphere almost immediately, as seen in figure
+  \ref{kspath}.
 
   \begin{figure}
     \caption{Planar Motion of S/C and Earth in the Cowell formulation}
@@ -342,6 +342,13 @@
     \includegraphics[scale=0.5]{PlanarPath90}
     \label{cowPath}
   \end{figure}
+
+  \begin{figure}
+    \caption{Relative Error in the Hamiltonian}
+    \centering
+    \includegraphics[scale=0.5]{Hamiltonian90}
+    \label{cowHam}
+  \end{figure}  
 
   The Cowell formulation was actually quite difficult to get to
   converge to a continuous orbit. The time steps necessary for a
@@ -359,6 +366,13 @@
     \centering
     \includegraphics[scale=0.5]{PlanarPathKS}
     \label{kspath}
+  \end{figure}
+
+    \begin{figure}
+    \caption{Relative Error in the Hamiltonian}
+    \centering
+    \includegraphics[scale=0.5]{HamiltonianKS}
+    \label{ksHam}
   \end{figure}
 
   Also of note is the interesting form of the relative error for the
